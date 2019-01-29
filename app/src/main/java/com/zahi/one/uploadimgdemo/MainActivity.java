@@ -24,6 +24,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.tbruyelle.rxpermissions2.RxPermissions;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -60,6 +62,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // 构建RxPermissions实例
+        RxPermissions rxPermissions = new RxPermissions(this);
+
+        // 申请权限
+        // rxPermissions.request(Manifest.permission_group.CAMERA)
 
         camera1Iv = findViewById(R.id.photo_from_camera_1_iv);
         camera1Tv = findViewById(R.id.photo_from_camera_1_tv);

@@ -78,12 +78,16 @@ public interface Service {
     /**
      * ###### 参数和文件混合上传 #####
      *
-     * @param body
+     * @param requestInfo
      * @param map
      * @return
      */
     @Multipart
     @POST("upload")
-    Call<Response> uploadParmAndFile(@Part("body") RequestBody body,
-                                     @PartMap Map<String, MultipartBody.Part> map);
+    Call<Response> uploadParmAndFile(@Part("requestData") RequestInfo requestInfo,
+                                     @PartMap Map<String, RequestBody> map);
+
+    @Multipart
+    @POST("upload/1")
+    Call<Response> uploadParmWithFileByMultiPartBody(@PartMap Map<String, MultipartBody.Part> map);
 }
