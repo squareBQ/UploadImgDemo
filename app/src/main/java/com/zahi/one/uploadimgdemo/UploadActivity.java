@@ -37,25 +37,47 @@ public class UploadActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_upload);
+
+        String imagePath = getIntent().getStringExtra("path");
+
         ImageView iv1 = findViewById(R.id.iv_1);
         TextView tv1 = findViewById(R.id.tv_1);
         ImageView iv2 = findViewById(R.id.iv_2);
         TextView tv2 = findViewById(R.id.tv_2);
         try {
-            /**
-             * 压缩对比（伪；压缩尺寸不固定）
-             */
-            Bitmap sdcardImg0 = BitmapFactory.decodeFile("{filePath}");
+            Bitmap sdcardImg0 = BitmapFactory.decodeFile(imagePath);
             tv1.append("未压缩：" + "width:" + sdcardImg0.getWidth() + ",height:" + sdcardImg0.getHeight() + ",bytes:" + sdcardImg0.getByteCount() / 1024);
-
-            Bitmap bitmap1 = CompressHelper.getDefault(this).compressToBitmap(new File("{filePath}"));
+            iv1.setImageBitmap(sdcardImg0);
+            /**南尘*/
+            CompressHelper compressHelper = new CompressHelper.Builder(this)
+                    .setMaxWidth(720)
+                    .setMaxHeight(960)
+                    .setQuality(80)
+                    .setCompressFormat(Bitmap.CompressFormat.JPEG)
+                    .build();
+            Bitmap bitmap1 = compressHelper.compressToBitmap(new File(imagePath));
             tv1.append("\n南尘压缩：" + "width:" + bitmap1.getWidth() + ",height:" + bitmap1.getHeight() + ",bytes:" + bitmap1.getByteCount() / 1024);
 
-            Bitmap bitmapComp = new Compressor(this).compressToBitmap(new File("{filePath}"));
-            tv1.append("\nCompressor压缩：" + "width:" + bitmapComp.getWidth() + ",height:" + bitmapComp.getHeight() + ",bytes:" + bitmapComp.getByteCount() / 1024);
+            /**compressorM*/ // 图片太大，导致bitmap oom
+            /**2.1.0版本会导致OO，且自定义压缩尺寸无效*/
+            /*Compressor compressor = new Compressor(this)
+                    .setMaxWidth(720)
+                    .setMaxHeight(960)
+                    .setQuality(80)
+                    .setCompressFormat(Bitmap.CompressFormat.JPEG);*/
 
+            /**1.0.4版本无异常*/
+            Compressor compressor = new Compressor.Builder(this)
+                    .setMaxWidth(720)
+                    .setMaxHeight(960)
+                    .build();
+            Bitmap bitmapComp = compressor.compressToBitmap(new File(imagePath));
+            tv1.append("\nCompressor压缩：" + "width:" + bitmapComp.getWidth() + ",height:" + bitmapComp.getHeight() + ",bytes:" + bitmapComp.getByteCount() / 1024);
+            iv2.setImageBitmap(bitmapComp);
+
+            /**鲁班*/
             Luban.with(this)
-                    .load(new File("{filePath}"))
+                    .load(new File(imagePath))
                     .ignoreBy(10)
                     .setCompressListener(new OnCompressListener() {
                         @Override

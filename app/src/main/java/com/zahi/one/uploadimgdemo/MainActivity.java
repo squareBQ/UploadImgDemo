@@ -87,6 +87,8 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 isGetCameraPermit = true;
             }
+        } else {
+            isGetCameraPermit = true;
         }
 
         //允许公开文件uri
@@ -121,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
      */
     public void takePhoto2(View view) {
         if (isGetCameraPermit) {
-            mCameraImgPath = Environment.getExternalStorageDirectory().getPath() + File.separator + "zahi.png";
+            mCameraImgPath = Environment.getExternalStorageDirectory().getPath() + File.separator + "zahi.jpg";
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             Uri uri = Uri.fromFile(new File(mCameraImgPath));
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -166,6 +168,7 @@ public class MainActivity extends AppCompatActivity {
             camera1Iv.setImageBitmap(bitmap);
             camera1Tv.setText("width-->" + bitmap.getWidth() + ", height-->" + bitmap.getHeight() + ", byte-->" + bitmap.getByteCount() / 1024);
 
+
         } else if (resultCode == Activity.RESULT_OK && requestCode == REQUEST_CAMERA2) {
             // 保存原图片，获取的是原图
             try {
@@ -173,6 +176,10 @@ public class MainActivity extends AppCompatActivity {
                 Bitmap bitmap = BitmapFactory.decodeStream(fos);
                 camera2Iv.setImageBitmap(bitmap);
                 camera2Tv.setText("width-->" + bitmap.getWidth() + ", height-->" + bitmap.getHeight() + ", byte-->" + bitmap.getByteCount() / 1024);
+
+                Intent intent = new Intent(this, UploadActivity.class);
+                intent.putExtra("path", mCameraImgPath);
+                startActivity(intent);
 
                 //保存拍照保存的图片路径到集合
                 mUploadImgMap.put(0, mCameraImgPath);
