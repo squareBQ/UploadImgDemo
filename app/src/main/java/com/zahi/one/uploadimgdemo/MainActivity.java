@@ -29,8 +29,10 @@ import com.tbruyelle.rxpermissions2.RxPermissions;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -123,9 +125,15 @@ public class MainActivity extends AppCompatActivity {
      */
     public void takePhoto2(View view) {
         if (isGetCameraPermit) {
-            mCameraImgPath = Environment.getExternalStorageDirectory().getPath() + File.separator + "zahi.jpg";
+
+            mCameraImgPath = Environment.getExternalStorageDirectory().getPath() + File.separator + "zahi" + File.separator + new Date().getTime() + ".jpg";
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            Uri uri = Uri.fromFile(new File(mCameraImgPath));
+            File file = new File(mCameraImgPath);
+            // FIXME sdcard中没有该目录，需要创建，否则图片无法保存
+            if (!file.getParentFile().exists()) {
+                file.getParentFile().mkdir();
+            }
+            Uri uri = Uri.fromFile(file);
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, uri); // 把图片保存到本地
             startActivityForResult(intent, REQUEST_CAMERA2);
@@ -172,17 +180,63 @@ public class MainActivity extends AppCompatActivity {
         } else if (resultCode == Activity.RESULT_OK && requestCode == REQUEST_CAMERA2) {
             // 保存原图片，获取的是原图
             try {
-                fos = new FileInputStream(mCameraImgPath);
-                Bitmap bitmap = BitmapFactory.decodeStream(fos);
-                camera2Iv.setImageBitmap(bitmap);
-                camera2Tv.setText("width-->" + bitmap.getWidth() + ", height-->" + bitmap.getHeight() + ", byte-->" + bitmap.getByteCount() / 1024);
+                File sourceFile = new File(mCameraImgPath);
+                if (sourceFile.exists() && sourceFile.length() > 0) {
+                    fos = new FileInputStream(mCameraImgPath);
+                    Bitmap bitmap = BitmapFactory.decodeStream(fos);
+                    camera2Iv.setImageBitmap(bitmap);
+                    camera2Tv.setText("from file : width-->" + bitmap.getWidth() + ", height-->" + bitmap.getHeight() + ", byte-->" + bitmap.getByteCount() / 1024);
 
-                Intent intent = new Intent(this, UploadActivity.class);
-                intent.putExtra("path", mCameraImgPath);
-                startActivity(intent);
+                    Intent intent = new Intent(this, UploadActivity.class);
+                    intent.putExtra("path", mCameraImgPath);
+                    startActivity(intent);
 
-                //保存拍照保存的图片路径到集合
-                mUploadImgMap.put(0, mCameraImgPath);
+                    //保存拍照保存的图片路径到集合
+                    mUploadImgMap.put(0, mCameraImgPath);
+                } else {
+                    // 从data中获取 （误）
+                    if (data == null) return;
+                    Uri photoUri = data.getData();
+                    Bitmap photoBitmap = null;
+                    if (photoUri != null) {
+                        photoBitmap = BitmapFactory.decodeFile(photoUri.getPath());
+                    }
+                    if (photoBitmap == null) {
+                        Bundle bundle = data.getExtras();
+                        if (bundle != null) {
+                            photoBitmap = (Bitmap) bundle.get("data");
+                        } else {
+                            Toast.makeText(this, "拍照失败", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    // 保存图片到本地
+                    FileOutputStream fileOutputStream = null;
+                    try {
+                        // 打开文件输出流
+                        fileOutputStream = new FileOutputStream(sourceFile);
+                        // 生成图片文件
+                        boolean compressSuccess = photoBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream);
+                        // 相片的完整路径
+                        if (compressSuccess && sourceFile.getPath() != null) {
+                            camera2Iv.setImageBitmap(photoBitmap);
+                            camera2Tv.setText("from data : width-->" + photoBitmap.getWidth() + ", height-->" + photoBitmap.getHeight() + ", byte-->" + photoBitmap.getByteCount() / 1024);
+
+                            Intent intent = new Intent(this, UploadActivity.class);
+                            intent.putExtra("path", mCameraImgPath);
+                            startActivity(intent);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        if (fileOutputStream != null) {
+                            try {
+                                fileOutputStream.close();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }
 
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
